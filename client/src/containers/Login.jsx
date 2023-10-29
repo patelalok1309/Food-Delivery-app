@@ -4,13 +4,41 @@ import { LoginInput } from "../components"
 import { FaEnvelope, FaLock, FcGoogle } from "../assets/icons"
 import { motion } from 'framer-motion'
 import { buttonClick, fadeInOut } from '../animations'
-import { FaGoogle } from 'react-icons/fa'
+
+import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth'
+import { app } from '../config/firebase.config'
+import { validateUserJWTToken } from '../api'
+
 function Login() {
 
     const [userEmail, setUserEmail] = useState("")
     const [isSignUp, setIsSignUp] = useState(false)
     const [password, setPassword] = useState("")
     const [confirm_password, setConfirm_password] = useState("")
+
+    const firebaseAuth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    const loginWithGoogle = async () => {
+        await signInWithPopup(firebaseAuth, provider).then(userCred => {
+            firebaseAuth.onAuthStateChanged(cred => {
+                // console.log(cred);
+                if (cred) {
+                    cred.getIdToken().then((token) => {
+                        validateUserJWTToken(token).then(data => {
+                            console.log('my data', data)
+                        })
+                    })
+                }
+            })
+        })
+    }
+
+
+    const signUpWithEmailPassword = async () => {
+        console.log('inside the email sign in')
+    }
+
     return (
         <motion.div className='w-screen h-screen relative overflow-hidden flex'>
 
@@ -71,7 +99,7 @@ function Login() {
 
                     {/* button section */}
                     {isSignUp ?
-                        <motion.button {...buttonClick} className='w-full px-4 py-2 rounded-md bg-red-400 cursor-pointer text-white text-xl capitalize hover:bg-red-500 translate-all duration-100'>
+                        <motion.button {...buttonClick} onClick={signUpWithEmailPassword} className='w-full px-4 py-2 rounded-md bg-red-400 cursor-pointer text-white text-xl capitalize hover:bg-red-500 translate-all duration-100'>
                             Sign Up
                         </motion.button> :
                         <motion.button {...buttonClick} className='w-full px-4 py-2 rounded-md bg-red-400 cursor-pointer text-white text-xl capitalize hover:bg-red-500 translate-all duration-100'>
@@ -87,10 +115,11 @@ function Login() {
                 </div>
 
                 <motion.div
+                    onClick={loginWithGoogle}
                     {...buttonClick}
                     className='flex items-center justify-center px-20 py-2 bg-lightOverlay backdrop-blur-md cursor-pointer rounded-3xl gap-4'>
                     <FcGoogle className='text-3xl' />
-                    <p className='capitalize text-base text-textColor'>Signin with Google</p>
+                    <p className='capitalize text-base text-textColor'>Sign-in with Google</p>
                 </motion.div>
             </div>
         </motion.div>
